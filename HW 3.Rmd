@@ -1,6 +1,6 @@
 ---
 title: "HW 3"
-author: "Melissa Yee"
+author: "Melissa Yee (UTEID: mky337)"
 date: "2025-02-10"
 output:
   html_document:
