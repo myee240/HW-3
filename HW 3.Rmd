@@ -1,0 +1,386 @@
+---
+title: "HW 3"
+author: "Melissa Yee"
+date: "2025-02-10"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+  pdf_document:
+    toc: true
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(dplyr)
+library(scales)
+library(mosaic)
+```
+
+Github Link: https://github.com/myee240/HW-3 
+
+# **Problem 1: Gas Prices**
+
+Claim: a statement of the theory itself. Evidence: the evidence for or
+against the theory, in the form of any relevant numerical and/or visual
+summaries If the theory looks correct, provide an estimate of the effect
+size: that is, how large is the difference (e.g. for highway vs.
+non-highway gas stations) and/or association (e.g. between income and
+price)? If the theory is unsupported by the data, explain why.
+Conclusion: your conclusion about whether the theory is supported or
+unsupported by the data
+
+### **Part A**
+
+Claim: Gas stations charge more if they lack direct competition in sight
+
+```{r echo=FALSE, warning=FALSE}
+#Import dataset
+gasstations <- read.csv("gasprices.csv")
+
+# Gas stations charge more if they lack direct competition in sight
+ggplot(gasstations, aes(x = factor(Competitors), y = Price)) +
+  geom_boxplot(fill = c("maroon", "steelblue")) +
+  stat_summary(
+    fun = median, 
+    geom = "text", 
+    aes(label = round(..y.., 2)), 
+    vjust = -0.5, 
+    color = "black"
+  ) +
+  labs(x = "Competitors?", y = "Gas Price", title = "Gas Prices Comparison: With vs. Without Competition") +
+  theme_minimal()
+
+#Set seed and compute 95% confidence interval using bootstrap samples
+set.seed(123)
+gasstations_boot = do(10000)*diffmean(Price ~ Competitors,data=resample(gasstations))
+confint(gasstations_boot, level=0.95)
+```
+
+Evidence: The theory is unsupported by the data because the median gas
+price comparison for gas stations with competition does not differ
+significantly then those without competition. The median gas price for
+gas stations with competition is \$1.85, while the median gas price for
+gas stations without competition is \$1.89.
+
+Conclusion: Furthermore, the difference in price between gas stations
+with and without direct competition in sight is somewhere between
+-\$0.06 and \$0.01, with 95% confidence. Since \$0.00 is a plausible
+value for the difference in mean gas price, there is not statistical
+evidence to claim that gas stations charge more if they lack direct
+competition in sight.
+
+### **Part B**
+
+Claim: The richer the area, the higher the gas prices.
+
+```{r echo=FALSE}
+# Group by zipcode and find mean household income for each
+mean_prices_by_zip <- gasstations %>%
+  group_by(Zipcode) %>%
+  summarise(mean_gas_price = mean(Price), mean_income = mean(Income))
+
+# The richer the area, the higher the gas prices.
+ggplot(mean_prices_by_zip, aes(x = mean_income, y = mean_gas_price)) +
+  geom_point(fill="darkblue") +
+  labs(x = "Mean Income", y = "Mean Gas Price", title = "Gas Prices vs. Median Household Income from Various Zipcodes") +
+  scale_x_continuous(labels = comma) +
+  scale_y_continuous(labels = comma) +
+  theme_minimal()
+
+#Set seed and compute 95% confidence interval using bootstrap samples
+set.seed(123)
+gasstations_boot <- do(10000) * cor(Price ~ Income, data = resample(gasstations))
+confint(gasstations_boot, level = 0.95)
+```
+
+Evidence: The theory is supported by the data because gas prices and
+median household income (for each zipcode) appear to have a slight
+positive correlation. As median household income increases, the gas
+prices in that zipcode also tend to increase as well.
+
+Conclusion: Furthermore, the correlation between gas prices and income
+is somewhere between 0.198 and 0.566, with 95% confidence. Since the
+confidence interval is entirely positive, there is statistical evidence
+to claim there is a positive correlation between gas prices and median
+household income.
+
+### **Part C**
+
+Claim: Gas stations at stoplights charge more.
+
+```{r echo=FALSE}
+# Gas stations at stoplights charge more.
+ggplot(gasstations, aes(x = factor(Stoplight), y = Price)) +
+  geom_boxplot(fill = c("maroon", "steelblue")) +
+  stat_summary(
+    fun = median, 
+    geom = "text", 
+    aes(label = round(..y.., 2)), 
+    vjust = -0.5, 
+    color = "black"
+  ) +
+  labs(x = "At a Stoplight?", y = "Gas Price", title = "Gas Prices Comparison: At or Not At a Stoplight") +
+  theme_minimal()
+
+#Set seed and compute 95% confidence interval using bootstrap samples
+set.seed(123)
+gasstations_boot = do(10000)*diffmean(Price ~ Stoplight,data=resample(gasstations))
+confint(gasstations_boot, level=0.95)
+```
+
+Evidence: The theory is unsupported by the data because the median gas
+price comparison for gas stations at a stoplight does not differ
+significantly then those not at a stoplight. The median gas price for
+gas stations at a stoplight is \$1.87, while the median gas price for
+gas stations not at a stoplight is \$1.84.
+
+Conclusion: Furthermore, the difference in price between gas stations at
+and not at a stoplight somewhere between -\$0.04 and \$0.03, with 95%
+confidence. Since \$0.00 is a plausible value for the difference in mean
+gas price, there is not statistical evidence to claim that gas stations
+charge more at stoplights.
+
+### **Part D**
+
+Claim: Gas stations with direct highway access charge more.
+
+```{r echo=FALSE}
+# Gas stations with direct highway access charge more.
+ggplot(gasstations, aes(x = factor(Highway), y = Price)) +
+  geom_boxplot(fill = c("maroon", "steelblue")) +
+  stat_summary(
+    fun = median, 
+    geom = "text", 
+    aes(label = round(..y.., 2)), 
+    vjust = -0.5, 
+    color = "black"
+  ) +
+  labs(x = "Accessible from a Highway?", y = "Gas Price", title = "Gas Prices Comparison: Accessibility from Highway ") +
+  theme_minimal()
+
+#Set seed and compute 95% confidence interval using bootstrap samples
+set.seed(123)
+gasstations_boot = do(10000)*diffmean(Price ~ Highway,data=resample(gasstations))
+confint(gasstations_boot, level=0.95)
+```
+
+Evidence: The theory is supported by the data because the median gas
+price comparison for gas stations with direct highway access does differ
+significantly then those without direct highway access. The median gas
+price for gas stations with highway access is \$1.89, while the median
+gas price for gas stations without highway access is \$1.84.
+
+Conclusion: Furthermore, the difference in price between gas stations
+with and without direct highway access is somewhere between \$0.01 and
+\$0.08, with 95% confidence. Since the confidence interval is entirely
+positive, there is statistical evidence to claim there is a mean
+difference and gas stations with direct highway access charge more.
+
+### **Part E**
+
+Claim: Shell charges more than all other non-Shell brands.
+
+```{r echo=FALSE}
+# Group by brand type (Shell or Non-Shell) and find mean gas price for each 
+mean_prices_by_brand <- gasstations %>%
+  mutate(Brand_Type = ifelse(Brand == "Shell", "Shell", "Non-Shell")) %>%
+  group_by(Brand_Type) %>%
+  summarise(mean_gas_price = mean(Price))
+
+# Shell charges more than all other non-Shell brands.
+ggplot(mean_prices_by_brand, aes(x = Brand_Type, y = mean_gas_price, fill = Brand_Type)) +
+  geom_bar(stat = "identity") +  # Bar plot
+  geom_text(aes(label = round(mean_gas_price, 2)), 
+            vjust = -0.5, size = 5) +  
+  labs(x = "Brand Type", y = "Mean Gas Price", title = "Gas Prices Comparison: Shell or Non-Shell") +
+  coord_cartesian(ylim = c(1.5, 2)) +
+  scale_fill_manual(values = c("maroon", "steelblue")) +  # Custom fill colors
+  theme_minimal()
+
+#Set seed and compute 95% confidence interval using bootstrap samples
+set.seed(123)
+gasstations <- mutate(gasstations, Brand_Type = ifelse(Brand == "Shell", "Shell", "Non-Shell"))
+gasstations_boot = do(10000)*diffmean(Price ~ Brand_Type,data=resample(gasstations))
+confint(gasstations_boot, level=0.95)
+```
+
+Evidence: The theory is unsupported by the data because the median gas
+price comparison for Shell and non-Shell gas stations does not differ
+significantlly. The median gas price for Shell gas stations is \$1.88,
+while the median gas price for Non-Shell gas stations not at a stoplight
+is \$1.86.
+
+Conclusion: Furthermore, the difference in price between gas stations at
+and not at a stoplight somewhere between -\$0.01 and \$0.07, with 95%
+confidence. Since \$0.00 is a plausible value for the difference in mean
+gas price, there is not statistical evidence to claim that Shell charges
+more than all other non-Shell brands.
+
+# **Problem 2: Mercedes S-Class Vehicles**
+
+### **Part A**
+
+```{r echo=FALSE}
+#Import dataset
+sclass <- read.csv("sclass.csv")
+
+#Filter dataset
+sclass_2021 <- filter(sclass, year == 2011 & trim == "63 AMG")
+
+#Set seed and compute 95% confidence interval using bootstrap samples
+set.seed(123)
+sclass_2014_bootstrap = do(1000)*mean(resample(sclass_2021$mileage))
+confint(sclass_2014_bootstrap, level = 0.95)
+```
+
+Conclusion: We are 95% confident the average mileage of 2011 S-Class 63
+AMGs that were hitting the used-car market when this data was collected
+is between 26,403.44 and 31,620.07 miles.
+
+### **Part B**
+
+```{r echo=FALSE}
+
+#Filter dataset
+#Create variable to help sorting
+sclass_2014 <- filter(sclass, year == 2014 & trim == "550")
+sclass_2014 <- mutate(sclass_2014, isBlack = color == "Black")
+
+#Set seed and compute 95% confidence interval using bootstrap samples
+set.seed(123)
+sclass_2014_bootstrap = do(1000)*prop(~isBlack, data=resample(sclass_2014))
+confint(sclass_2014_bootstrap, level=0.95)
+```
+
+Conclusion: We are 95% confident the proportion of all 2014 S-Class 550s
+that were painted black is between 41.7% and 45.4%.
+
+# **Problem 3: NBC Pilot Surveys**
+
+```{r echo=FALSE}
+#Import dataset
+nbc <- read.csv("nbc_pilotsurvey.csv")
+```
+
+### **Part A**
+
+Question: Who makes people happier: Ed from "Living with Ed" or Earl
+from "My Name is Earl"?
+
+Approach: I conducted a 95% confidence interval using bootstrap samples
+to answer this question. I resampled the filtered dataset using only
+view responses for the two shows with replacement. Additionally, I
+calculated the mean difference of Q1, asking about happiness levels,
+between the two shows. This process repeated 10,000 times, creating a
+distribution of bootstrapped differences in means.
+
+Results: The difference in viewer response (1-5) happiness between the
+two shows is somewhere between -0.398 and 0.099, with 95% confidence.
+
+Conclusion: No, there is not evidence of a difference in mean viewer
+response because 0 is plausible value for the mean difference. This
+indicates the possibility there is no difference in viewer response to
+Q1, asking about happiness levels, between the two shows.
+
+```{r echo=FALSE}
+#Filter dataset 
+nbc_partA <- filter(nbc, Show == "Living with Ed" | Show == "My Name is Earl")
+
+#Set seed and compute 95% confidence interval using bootstrap samples
+set.seed(123)
+nbc_boot_Q1happy = do(10000)*diffmean(Q1_Happy ~ Show,data=resample(nbc_partA))
+confint(nbc_boot_Q1happy, level=0.95)
+
+```
+
+### **Part B**
+
+Question: Which reality/contest show, "The Biggest Loser" or "The
+Apprentice: Los Angeles", made people feel more annoyed?
+
+Approach: I conducted a 95% confidence interval using bootstrap samples
+to answer this question. I resampled the filtered dataset using only
+view responses for the two shows with replacement. Additionally, I
+calculated the mean difference of Q1, asking about annoyance levels,
+between the two shows. This process repeated 10,000 times, creating a
+distribution of bootstrapped differences in means.
+
+Results: The difference in viewer response (1-5) annoyance between the
+two shows is somewhere between -1.088 and -0.403, with 95% confidence.
+
+Conclusion: Yes, there is statistical evidence of a difference in mean
+viewer response because the confidence interval is entirely negative.
+This indicates, viewers found "The Apprentice: Los Angeles" more
+annoying than "The Biggest Loser" on average.
+
+```{r echo=FALSE}
+#Filter dataset
+nbc_partB <- filter(nbc, Show == "The Biggest Loser" | Show == "The Apprentice: Los Angeles")
+
+#Set seed and compute 95% confidence interval using bootstrap samples
+set.seed(123)
+nbc_boot_Q1annoyed = do(10000)*diffmean(Q1_Annoyed ~ Show,data=resample(nbc_partA))
+confint(nbc_boot_Q1annoyed, level=0.95)
+
+```
+
+### **Part C**
+
+Question: What proportion of American TV watchers find "Dancing with the Stars"
+confusing?
+
+Approach: I conducted a 95% confidence interval using bootstrap samples
+to answer this question. I resampled the filtered dataset using only
+view responses for the one show with replacement. Additionally, I
+calculated the proportion of viewer responses of 4 or greater to Q2,
+asking about confusion levels. This process repeated 10,000 times,
+creating a distribution of bootstrapped proportions.
+
+Results: The proportion of viewer responses (1-5) reporting confusion is
+between 38.1% and 53.0%, with 95% confidence.
+
+Conclusion: We are 95% confident the proportion of American TV watchers that find "Dancing with the Stars" confusing is somewhere between 38.1% and 53.0%. Since the interval includes 50%, there is uncertainty about whether the
+majority of American TV watchers found it confusing.
+
+```{r echo=FALSE}
+#Filter dataset 
+#Create variable to help sorting
+nbc_partC <- filter(nbc, Show == "Dancing with the Stars")
+nbc_partC <- mutate(nbc_partC, isConfused = Q2_Confusing == c(4 | 5))
+
+#Set seed and compute 95% confidence interval using bootstrap samples
+set.seed(123)
+nbc_boot_Q2 = do(1000)*prop(~isConfused, data=resample(nbc_partC))
+confint(nbc_boot_Q2, level=0.95)
+```
+
+# **Problem 4: EBay**
+
+Question: Does the extra traffic brought to the Ebay site from paid search results justify the cost of the ads themselves?
+
+Approach: First, I created a ratio revenue outcome variable of interest at the DMA level. Next, I conducted a 95% confidence interval using bootstrap samples
+to answer this question. I calculated the mean difference of revenue ratio between the control and treatment groups. This process repeated 10,000 times,
+creating a distribution of bootstrapped proportions.
+
+Results: The mean difference in revenue ratio between the control and treatment groups is somewhere between -0.092 and -0.013, with 95% confidence.
+
+Conclusion: Yes, there is statistical evidence of a mean difference in revenue ratio between the control and treatment groups of designated market areas. Since the negative interval excludes 0, this indicates the extra traffic brought to the Ebay site from paid search results justifies the cost of the ads themselves. 
+
+```{r echo=FALSE}
+#Import dataset
+#Create outcome variable of interest using rev_after and rev_before
+ebay <- read.csv("ebay.csv")
+ebay <- mutate(ebay, rev_ratio = rev_after/rev_before)
+
+#Set seed and compute 95% confidence interval using bootstrap samples
+set.seed(123)
+ebay_boot <- do(10000)*diffmean(rev_ratio ~ adwords_pause, data=resample(ebay))
+confint(ebay_boot, level=0.95)
+
+
+```
